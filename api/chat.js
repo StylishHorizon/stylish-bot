@@ -29,7 +29,7 @@ export async function POST(request) {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        inputs: siteContext.substring(0, 1000) + message,  // Shorten for gpt2
+        inputs: siteContext.substring(0, 1000),  // Shorten for gpt2
         parameters: { max_new_tokens: 150, temperature: 0.7 }
       })
     });
