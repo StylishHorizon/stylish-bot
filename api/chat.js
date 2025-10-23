@@ -4,7 +4,7 @@ export async function POST(request) {
   const { message } = await request.json();
   console.log('Request received:', message);
 
-  const token = process.env.HF_TOKEN || 'no token';  // Fallback for log
+  const token = process.env.HF_TOKEN || 'no token';
   console.log('HF_TOKEN present?', !!token && token !== 'no token');
 
   const siteContext = `
@@ -18,19 +18,19 @@ export async function POST(request) {
   User: ${message}
   `;
 
-  let aiResponse = 'Default reply: Hi! Tell me about your tapes.';  // Init before try
+  let aiResponse = 'Default reply: Hi! Tell me about your tapes.';  // Fallback
   try {
     if (!token || token === 'no token') {
       aiResponse = 'No HF_TOKEN in env — check Vercel settings.';
       return Response.json({ reply: aiResponse });
     }
 
-    const hfRes = await fetch('https://api-inference.huggingface.co/models/google/flan-t5-large', {
+    const hfRes = await fetch('https://api-inference.huggingface.co/models/gpt2', {  // Stable free model
       method: 'POST',
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        inputs: siteContext,
-        parameters: { max_new_tokens: 300, temperature: 0.7, return_full_text: false }
+        inputs: siteContext.substring(0, 1000) + message,  // Shorten for gpt2
+        parameters: { max_new_tokens: 150, temperature: 0.7 }
       })
     });
     console.log('HF status:', hfRes.status);
