@@ -29,7 +29,7 @@ export async function POST(request) {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'openchat/openchat-3.5',  // Free conversational, detect lang, stable
+        model: 'deepseek/deepseek-chat',  // Free, stable, conversational
         messages: [{ role: 'system', content: siteContext }, { role: 'user', content: message }],
         max_tokens: 300,
         temperature: 0.7
