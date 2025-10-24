@@ -4,8 +4,8 @@ export async function POST(request) {
   const { message } = await request.json();
   console.log('Request received:', message);
 
-  const token = process.env.HF_TOKEN || 'no token';
-  console.log('HF_TOKEN present?', !!token && token !== 'no token');
+  const token = process.env.OR_KEY || 'no token';
+  console.log('OR_KEY present?', !!token && token !== 'no token');
 
   const siteContext = `
   You are a helpful assistant for Stylish Horizon: no-hype restoration of VHS/Hi8/MiniDV. Keep it honest, concise, with a subtle wit—clear as a square-pixel horizon.
@@ -21,30 +21,32 @@ export async function POST(request) {
   let aiResponse = 'Default reply: Hi! Tell me about your tapes.';  // Fallback
   try {
     if (!token || token === 'no token') {
-      aiResponse = 'No HF_TOKEN in env — check Vercel settings.';
+      aiResponse = 'No OR_KEY in env — check Vercel settings.';
       return Response.json({ reply: aiResponse });
     }
 
-    const hfRes = await fetch('https://api-inference.huggingface.co/models/gpt2', {  // Stable free model
+    const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        inputs: siteContext.substring(0, 1000),  // Shorten for gpt2
-        parameters: { max_new_tokens: 150, temperature: 0.7 }
+        model: 'microsoft/DialoGPT-medium',  // Free, conversational, stable
+        messages: [{ role: 'system', content: siteContext }, { role: 'user', content: message }],
+        max_tokens: 300,
+        temperature: 0.7
       })
     });
-    console.log('HF status:', hfRes.status);
-    if (hfRes.ok) {
-      const data = await hfRes.json();
-      aiResponse = Array.isArray(data) ? data[0].generated_text : 'Parsing issue.';
+    console.log('OR status:', orRes.status);
+    if (orRes.ok) {
+      const data = await orRes.json();
+      aiResponse = data.choices[0].message.content;
     } else {
-      const errorText = await hfRes.text();
-      console.log('HF error text:', errorText.substring(0, 100));
-      aiResponse = `HF error ${hfRes.status}: ${errorText.substring(0, 100)}...`;
+      const errorText = await orRes.text();
+      console.log('OR error text:', errorText.substring(0, 100));
+      aiResponse = `OR error ${orRes.status}: ${errorText.substring(0, 100)}...`;
     }
   } catch (err) {
     console.log('Fetch error:', err.message);
-    aiResponse = `Error: ${err.message}. Check token/logs.`;
+    aiResponse = `Error: ${err.message}. Check key/logs.`;
   }
 
   return Response.json({ reply: aiResponse });
